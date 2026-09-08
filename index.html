@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora V1.0</title>
+<style>
+  /* RNF-2: diseño ordenado, botones redondeados. RNF-4: textos grandes y legibles. */
+  * { box-sizing: border-box; font-family: -apple-system, Arial, sans-serif; }
+  body {
+    margin: 0;
+    background: #e8e4dc;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .telefono {
+    width: 380px;
+    max-width: 100%;
+    background: #f6f3ec;
+    min-height: 100vh;
+    padding: 18px 14px;
+    border-left: 3px solid #222;
+    border-right: 3px solid #222;
+  }
+  .barra-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  .btn-historial {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+  }
+  /* Panel de historial (RF-2, RF-9) */
+  .historial {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .historial.oculto { display: none; }
+  .historial-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 17px;
+  }
+  .historial-top button {
+    background: none; border: none;
+    color: #4a6fa5; font-size: 17px; cursor: pointer;
+  }
+  .historial-lista { margin-top: 6px; font-size: 16px; max-height: 120px; overflow-y: auto; }
+  .historial-lista div { padding: 2px 0; border-bottom: 1px solid #f0f0f0; }
+  .sin-op { color: #111; }
+  /* Pantalla (RF-7, RF-10) */
+  .pantalla {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    padding: 14px 16px;
+    text-align: right;
+    min-height: 110px;
+    margin-bottom: 12px;
+  }
+  #expresion {
+    font-size: 22px;
+    color: #999;
+    min-height: 28px;
+    word-wrap: break-word;
+  }
+  #resultado {
+    font-size: 52px;
+    color: #111;
+    font-weight: 500;
+    word-wrap: break-word;
+  }
+  /* Resultado se diferencia visualmente (RF-10 CA2) */
+  #resultado.es-resultado { color: #000; font-weight: 700; }
+  #resultado.es-error { color: #c0392b; font-size: 22px; }
+  /* Teclado */
+  .teclado {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  button.tecla {
+    background: #fffdf8;
+    border: 1px solid #d8d2c6;
+    border-radius: 12px;
+    font-size: 26px;
+    padding: 14px 0;
+    cursor: pointer;
+    color: #222;
+  }
+  button.tecla:active { background: #eee; }
+  /* Operadores en azul como la imagen */
+  button.op {
+    background: #c9d6f2;
+    color: #2c4f8a;
+    border-color: #b3c3e8;
+  }
+  button.op:active { background: #b3c5ec; }
+  .btn-igual {
+    grid-column: span 4;
+    background: #1c1c1e;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 28px;
+    padding: 14px 0;
+    cursor: pointer;
+    margin-top: 2px;
+  }
+  .btn-igual:active { background: #333; }
+</style>
+</head>
+<body>
+
+<div class="telefono">
+  <!-- Encabezado -->
+  <div class="barra-top">
+    <span>calculadora</span>
+    <!-- Boton para mostrar / ocultar historial -->
+    <button class="btn-historial" onclick="mostrarHistorial()" title="Ver historial">🕒</button>
+  </div>
+
+  <!-- Historial: RF-2 (guardar y consultar) y RF-9 (limpiar) -->
+  <div class="historial" id="panelHistorial">
+    <div class="historial-top">
+      <span>Historial</span>
+      <button onclick="limpiarHistorial()">Limpiar</button>
+    </div>
+    <div class="historial-lista" id="listaHistorial">
+      <div class="sin-op">Sin operaciones aun.</div>
+    </div>
+  </div>
+
+  <!-- Pantalla: arriba expresion pequeña, abajo numero/resultado grande -->
+  <div class="pantalla">
+    <div id="expresion">0</div>
+    <div id="resultado">0</div>
+  </div>
+
+  <!-- Botones -->
+  <div class="teclado">
+    <button class="tecla" onclick="borrarTodo()">AC</button>
+    <button class="tecla" onclick="agregar('(')">(</button>
+    <button class="tecla" onclick="agregar(')')">)</button>
+    <button class="tecla" onclick="retroceso()">⌫</button>
+
+    <button class="tecla" onclick="agregar('7')">7</button>
+    <button class="tecla" onclick="agregar('8')">8</button>
+    <button class="tecla" onclick="agregar('9')">9</button>
+    <button class="tecla op" onclick="agregar('/')">÷</button>
+
+    <button class="tecla" onclick="agregar('4')">4</button>
+    <button class="tecla" onclick="agregar('5')">5</button>
+    <button class="tecla" onclick="agregar('6')">6</button>
+    <button class="tecla op" onclick="agregar('*')">×</button>
+
+    <button class="tecla" onclick="agregar('1')">1</button>
+    <button class="tecla" onclick="agregar('2')">2</button>
+    <button class="tecla" onclick="agregar('3')">3</button>
+    <button class="tecla op" onclick="agregar('-')">−</button>
+
+    <button class="tecla" onclick="cambiarSigno()">+/-</button>
+    <button class="tecla" onclick="agregar('0')">0</button>
+    <button class="tecla" onclick="agregar('.')">.</button>
+    <button class="tecla op" onclick="agregar('+')">+</button>
+
+    <button class="btn-igual" onclick="calcular()">=</button>
+  </div>
+</div>
+
+<script>
+// ===== VARIABLES SIMPLES =====
+var texto = "";            // lo que el usuario escribe, ej: "5+3"
+var ultimoResultado = "";  // guarda el resultado para continuar operando (RF-12)
+var recienCalculado = false; // true cuando se acaba de presionar =
+var historial = [];        // lista de operaciones (RF-2)
+
+// ===== MOSTRAR EN PANTALLA (RF-7, RF-10) =====
+function actualizarPantalla() {
+  var exp = document.getElementById("expresion");
+  var res = document.getElementById("resultado");
+  if (texto === "") {
+    exp.textContent = "0";
+    res.textContent = "0";
+  } else {
+    // Mostrar simbolos bonitos ÷ × − en vez de / * -
+    var bonito = texto.replaceAll("*", "×").replaceAll("/", "÷").replaceAll("-", "−");
+    exp.textContent = bonito;
+    res.textContent = bonito;
+  }
+  res.className = "";
+}
+
+// ===== AGREGAR NUMEROS, OPERADORES, PUNTOS Y PARENTESIS =====
+function agregar(valor) {
+  var res = document.getElementById("resultado");
+  // Si habia un error, empezar de cero (RF-5 CA2)
+  if (res.classList.contains("es-error")) {
+    texto = "";
+    recienCalculado = false;
+  }
+
+  // RF-12 CA1: despues de un resultado, si presiona numero empieza operacion nueva
+  if (recienCalculado) {
+    if ((valor >= "0" && valor <= "9") || valor === "." || valor === "(") {
+      texto = "";
+      ultimoResultado = "";
+    }
+    recienCalculado = false;
+  }
+
+  // --- Numeros (RF-7) ---
+  if (valor >= "0" && valor <= "9") {
+    // CA1: si esta en 0, reemplazar el 0 inicial
+    if (texto === "" || texto === "0") { texto = valor; }
+    else { texto = texto + valor; }
+    actualizarPantalla();
+    return;
+  }
+
+  // --- Punto decimal (RF-3) ---
+  if (valor === ".") {
+    var operando = ultimoNumero(texto);
+    if (operando.indexOf(".") !== -1) { return; } // CA1: ya tiene punto, ignorar
+    if (operando === "") { // CA3: sin numero muestra 0.
+      if (texto === "" || esOperador(ultimoChar()) || ultimoChar() === "(") {
+        texto = texto + "0.";
+      } else {
+        texto = texto + ".";
+      }
+    } else {
+      texto = texto + ".";
+    }
+    actualizarPantalla();
+    return;
+  }
+
+  // --- Parentesis (RF-13 CA2) ---
+  if (valor === "(" || valor === ")") {
+    if (recienCalculado && valor === "(") { texto = ""; recienCalculado = false; }
+    if (texto === "0") { texto = ""; }
+    texto = texto + valor;
+    actualizarPantalla();
+    return;
+  }
+
+  // --- Operadores + - * / (RF-6, RF-13) ---
+  if (valor === "+" || valor === "-" || valor === "*" || valor === "/") {
+    // CA3: sin numero inicial, * y / no inician operacion
+    if (texto === "") {
+      if (valor === "*" || valor === "/") { return; }
+      // RF-12 CA2: si hay resultado anterior, usarlo
+      if (ultimoResultado !== "" && ultimoResultado !== "Error") {
+        texto = ultimoResultado + valor;
+      } else {
+        if (valor === "-") { texto = "-"; } // permitir negativo inicial
+        else { return; }
+      }
+      actualizarPantalla();
+      return;
+    }
+    // RF-12 CA2: despues de =, seguir operando con el resultado
+    if (recienCalculado && ultimoResultado !== "") {
+      texto = ultimoResultado + valor;
+      recienCalculado = false;
+      actualizarPantalla();
+      return;
+    }
+    var ult = ultimoChar();
+    // CA1 y CA2: operador consecutivo reemplaza al anterior
+    if (esOperador(ult)) {
+      // permitir "(-" para numeros negativos despues de ( * /
+      if (valor === "-" && (ult === "*" || ult === "/" || ult === "(")) {
+        texto = texto + valor;
+      } else {
+        texto = texto.substring(0, texto.length - 1) + valor;
+      }
+    } else if (ult === "(") {
+      if (valor === "-") { texto = texto + valor; } // negativo dentro de parentesis
+      else { return; }
+    } else {
+      texto = texto + valor;
+    }
+    actualizarPantalla();
+    return;
+  }
+}
+
+// ===== RETROCESO Y AC (RF-4) =====
+function retroceso() {
+  // CA1: borra solo el ultimo caracter, no toca historial (CA3)
+  var res = document.getElementById("resultado");
+  if (res.classList.contains("es-error")) { texto = ""; actualizarPantalla(); return; }
+  if (recienCalculado) { return; } // despues del resultado no borra, debe iniciar nueva op
+  if (texto.length > 0) {
+    texto = texto.substring(0, texto.length - 1);
+  }
+  actualizarPantalla();
+}
+
+function borrarTodo() {
+  // CA2: borra todo y muestra 0, no toca historial (CA3)
+  texto = "";
+  ultimoResultado = "";
+  recienCalculado = false;
+  actualizarPantalla();
+}
+
+// ===== CAMBIO DE SIGNO (RF-8) =====
+function cambiarSigno() {
+  var res = document.getElementById("resultado");
+  if (res.classList.contains("es-error")) { return; }
+  // Si se acaba de calcular, cambiar el signo del resultado
+  if (recienCalculado && ultimoResultado !== "") {
+    if (ultimoResultado === "0") { return; } // CA3: cero queda en 0
+    if (ultimoResultado.charAt(0) === "-") {
+      ultimoResultado = ultimoResultado.substring(1);
+    } else {
+      ultimoResultado = "-" + ultimoResultado;
+    }
+    texto = ultimoResultado;
+    recienCalculado = false;
+    actualizarPantalla();
+    return;
+  }
+  if (texto === "" || texto === "0") { return; } // CA3: cero queda en 0
+  // Buscar el ultimo numero y cambiarle el signo
+  var i = texto.length - 1;
+  while (i >= 0 && ((texto[i] >= "0" && texto[i] <= "9") || texto[i] === ".")) { i--; }
+  var numero = texto.substring(i + 1);
+  var antes = texto.substring(0, i + 1);
+  if (numero === "" || numero === "0") { return; }
+  // Si ya es negativo "(-N", quitarlo; si es "-N", quitar el menos
+  if (antes.endsWith("(-")) {
+    texto = antes.substring(0, antes.length - 2) + numero;
+  } else if (antes.endsWith("-") && (antes.length === 1 || esOperador(antes[antes.length - 2]) || antes[antes.length - 2] === "(")) {
+    texto = antes.substring(0, antes.length - 1) + numero;
+  } else {
+    // CA1: positivo -> negativo usando (-N) para no confundir con resta
+    texto = antes + "(-" + numero;
+  }
+  actualizarPantalla();
+}
+
+// ===== CALCULAR (RF-1, RF-5, RF-10, RF-11, RF-12, RF-13) =====
+function calcular() {
+  var res = document.getElementById("resultado");
+  var exp = document.getElementById("expresion");
+
+  // RF-11: prevenir entradas invalidas
+  if (texto === "" || texto === "0") { return; }           // CA1: sin operacion no calcula
+  var ult = ultimoChar();
+  if (esOperador(ult) || ult === "(" || ult === ".") { return; } // CA2: operacion incompleta
+  if (!parentesisBalanceados(texto)) { mostrarError("Error: paréntesis"); return; }
+
+  try {
+    // Solo permitir caracteres validos (seguridad basica)
+    for (var k = 0; k < texto.length; k++) {
+      var c = texto[k];
+      if ("0123456789+-*/.() ".indexOf(c) === -1) { mostrarError("Error"); return; }
+    }
+    var valor = Function('"use strict"; return (' + texto + ')')();
+
+    // RF-5 CA1: division por cero
+    if (valor === Infinity || valor === -Infinity || Number.isNaN(valor)) {
+      mostrarError("Error: división por cero");
+      return;
+    }
+
+    // RF-1: maximo 2 decimales con redondeo, quitar ceros innecesarios
+    var redondeado = Math.round(valor * 100) / 100; // 2 decimales
+    var final = String(parseFloat(redondeado.toFixed(2))); // quita ceros: 5.00->5, 5.50->5.5
+    if (final === "-0") { final = "0"; }
+
+    // RF-10: mostrar resultado diferenciado
+    exp.textContent = texto.replaceAll("*", "×").replaceAll("/", "÷").replaceAll("-", "−") + " =";
+    res.textContent = final;
+    res.className = "es-resultado";
+
+    // RF-2 CA1: guardar en historial
+    historial.push(texto + " = " + final);
+    mostrarEnHistorial();
+
+    // RF-12: guardar resultado para continuar operando
+    ultimoResultado = final;
+    texto = final;
+    recienCalculado = true;
+
+  } catch (e) {
+    // RF-5: mostrar error sin bloquear (CA2, CA3)
+    mostrarError("Error");
+  }
+}
+
+function mostrarError(mensaje) {
+  var res = document.getElementById("resultado");
+  res.textContent = mensaje;
+  res.className = "es-error";
+  recienCalculado = false;
+}
+
+// ===== HISTORIAL (RF-2, RF-9) =====
+function mostrarEnHistorial() {
+  var lista = document.getElementById("listaHistorial");
+  lista.innerHTML = "";
+  // CA2: ver registros anteriores (los ultimos arriba)
+  for (var i = historial.length - 1; i >= 0; i--) {
+    var d = document.createElement("div");
+    d.textContent = historial[i];
+    lista.appendChild(d);
+  }
+  // Asegurar que el panel este visible al guardar
+  document.getElementById("panelHistorial").classList.remove("oculto");
+}
+
+function limpiarHistorial() {
+  // RF-9 CA1: borra todo
+  historial = [];
+  var lista = document.getElementById("listaHistorial");
+  // CA2: muestra que no hay operaciones
+  lista.innerHTML = '<div class="sin-op">Sin operaciones aun.</div>';
+  // CA3: despues se puede seguir guardando (no se bloquea nada)
+}
+
+function mostrarHistorial() {
+  // Mostrar / ocultar panel (como en la imagen: icono reloj)
+  var p = document.getElementById("panelHistorial");
+  if (p.classList.contains("oculto")) { p.classList.remove("oculto"); }
+  else { p.classList.add("oculto"); }
+}
+
+// ===== AYUDAS PEQUEÑAS =====
+function ultimoChar() {
+  if (texto === "") { return ""; }
+  return texto[texto.length - 1];
+}
+function esOperador(c) {
+  return c === "+" || c === "-" || c === "*" || c === "/";
+}
+// Devuelve el numero que se esta escribiendo (para RF-3)
+function ultimoNumero(t) {
+  var i = t.length - 1;
+  var num = "";
+  while (i >= 0 && ((t[i] >= "0" && t[i] <= "9") || t[i] === ".")) {
+    num = t[i] + num;
+    i--;
+  }
+  return num;
+}
+function parentesisBalanceados(t) {
+  var cont = 0;
+  for (var i = 0; i < t.length; i++) {
+    if (t[i] === "(") { cont++; }
+    if (t[i] === ")") { cont--; if (cont < 0) { return false; } }
+  }
+  return cont === 0;
+}
+
+// Inicio: pantalla en 0 (RF-7, RF-10 CA3)
+actualizarPantalla();
+</script>
+</body>
+</html>
