@@ -109,7 +109,7 @@
   }
   button.op:active { background: #b3c5ec; }
   .btn-igual {
-    grid-column: span 4;
+    grid-column: span 3;
     background: #1c1c1e;
     color: #fff;
     border: none;
@@ -132,7 +132,7 @@
     <button class="btn-historial" onclick="mostrarHistorial()" title="Ver historial">🕒</button>
   </div>
 
-  <!-- Historial: RF-2 (guardar y consultar) y RF-9 (limpiar) -->
+  <!-- Historial: RF-2 (guardar y consultar) y RF-8 nuevo / RF-9 v1 (limpiar) -->
   <div class="historial" id="panelHistorial">
     <div class="historial-top">
       <span>Historial</span>
@@ -176,6 +176,7 @@
     <button class="tecla" onclick="agregar('.')">.</button>
     <button class="tecla op" onclick="agregar('+')">+</button>
 
+    <button class="tecla op" onclick="porcentaje()">%</button>
     <button class="btn-igual" onclick="calcular()">=</button>
   </div>
 </div>
@@ -183,11 +184,11 @@
 <script>
 // ===== VARIABLES SIMPLES =====
 var texto = "";            // lo que el usuario escribe, ej: "5+3"
-var ultimoResultado = "";  // guarda el resultado para continuar operando (RF-12)
+var ultimoResultado = "";  // guarda el resultado para continuar operando (RF-11 nuevo / RF-12 v1)
 var recienCalculado = false; // true cuando se acaba de presionar =
 var historial = [];        // lista de operaciones (RF-2)
 
-// ===== MOSTRAR EN PANTALLA (RF-7, RF-10) =====
+// ===== MOSTRAR EN PANTALLA (RF-7, RF-9 nuevo / RF-10 v1) =====
 function actualizarPantalla() {
   var exp = document.getElementById("expresion");
   var res = document.getElementById("resultado");
@@ -212,7 +213,7 @@ function agregar(valor) {
     recienCalculado = false;
   }
 
-  // RF-12 CA1: despues de un resultado, si presiona numero empieza operacion nueva
+  // RF-11 CA1 (RF-12 v1): despues de un resultado, si presiona numero empieza operacion nueva
   if (recienCalculado) {
     if ((valor >= "0" && valor <= "9") || valor === "." || valor === "(") {
       texto = "";
@@ -247,7 +248,7 @@ function agregar(valor) {
     return;
   }
 
-  // --- Parentesis (RF-13 CA2) ---
+  // --- Parentesis (RF-12 CA2 nuevo / RF-13 v1) ---
   if (valor === "(" || valor === ")") {
     if (recienCalculado && valor === "(") { texto = ""; recienCalculado = false; }
     if (texto === "0") { texto = ""; }
@@ -256,12 +257,12 @@ function agregar(valor) {
     return;
   }
 
-  // --- Operadores + - * / (RF-6, RF-13) ---
+  // --- Operadores + - * / (RF-6, RF-12 nuevo / RF-13 v1) ---
   if (valor === "+" || valor === "-" || valor === "*" || valor === "/") {
     // CA3: sin numero inicial, * y / no inician operacion
     if (texto === "") {
       if (valor === "*" || valor === "/") { return; }
-      // RF-12 CA2: si hay resultado anterior, usarlo
+      // RF-11 CA2 (RF-12 v1): si hay resultado anterior, usarlo
       if (ultimoResultado !== "" && ultimoResultado !== "Error") {
         texto = ultimoResultado + valor;
       } else {
@@ -271,7 +272,7 @@ function agregar(valor) {
       actualizarPantalla();
       return;
     }
-    // RF-12 CA2: despues de =, seguir operando con el resultado
+    // RF-11 CA2 (RF-12 v1): despues de =, seguir operando con el resultado
     if (recienCalculado && ultimoResultado !== "") {
       texto = ultimoResultado + valor;
       recienCalculado = false;
@@ -303,7 +304,8 @@ function retroceso() {
   // CA1: borra solo el ultimo caracter, no toca historial (CA3)
   var res = document.getElementById("resultado");
   if (res.classList.contains("es-error")) { texto = ""; actualizarPantalla(); return; }
-  if (recienCalculado) { return; } // despues del resultado no borra, debe iniciar nueva op
+  // RF-4 CA1 + RF-11 (RF-12 v1): despues del resultado se permite editar el resultado
+  if (recienCalculado) { recienCalculado = false; ultimoResultado = ""; }
   if (texto.length > 0) {
     texto = texto.substring(0, texto.length - 1);
   }
@@ -318,7 +320,7 @@ function borrarTodo() {
   actualizarPantalla();
 }
 
-// ===== CAMBIO DE SIGNO (RF-8) =====
+// ===== CAMBIO DE SIGNO (RF-14 nuevo / RF-8 v1) =====
 function cambiarSigno() {
   var res = document.getElementById("resultado");
   if (res.classList.contains("es-error")) { return; }
@@ -336,31 +338,158 @@ function cambiarSigno() {
     return;
   }
   if (texto === "" || texto === "0") { return; } // CA3: cero queda en 0
+  // RF-8: si termina en ) intentar desenvolver un patron (-N) -> N
+  if (texto.charAt(texto.length - 1) === ")") {
+    var idx = texto.lastIndexOf("(-");
+    if (idx !== -1) {
+      var inner = texto.substring(idx + 2, texto.length - 1);
+      if (/^[0-9.]+$/.test(inner) && inner !== "" && inner !== "0" && inner.indexOf("(") === -1) {
+        texto = texto.substring(0, idx) + inner;
+        actualizarPantalla();
+        return;
+      }
+    }
+    return; // expresion compleja entre parentesis: no cambiar
+  }
   // Buscar el ultimo numero y cambiarle el signo
   var i = texto.length - 1;
   while (i >= 0 && ((texto[i] >= "0" && texto[i] <= "9") || texto[i] === ".")) { i--; }
   var numero = texto.substring(i + 1);
   var antes = texto.substring(0, i + 1);
   if (numero === "" || numero === "0") { return; }
-  // Si ya es negativo "(-N", quitarlo; si es "-N", quitar el menos
+  // Si ya es negativo "(-N" legacy sin cerrar, quitarlo; si es "-N", quitar el menos
   if (antes.endsWith("(-")) {
     texto = antes.substring(0, antes.length - 2) + numero;
   } else if (antes.endsWith("-") && (antes.length === 1 || esOperador(antes[antes.length - 2]) || antes[antes.length - 2] === "(")) {
     texto = antes.substring(0, antes.length - 1) + numero;
   } else {
-    // CA1: positivo -> negativo usando (-N) para no confundir con resta
-    texto = antes + "(-" + numero;
+    // CA1: positivo -> negativo usando (-N) con cierre para mantener expresion valida (RF-13)
+    texto = antes + "(-" + numero + ")";
   }
   actualizarPantalla();
 }
 
-// ===== CALCULAR (RF-1, RF-5, RF-10, RF-11, RF-12, RF-13) =====
+// ===== PORCENTAJE (RF-13 doc REQUERIMIENTOS) =====
+function formatearNumero(valor) {
+  var redondeado = Math.round(valor * 100) / 100;
+  var s = String(parseFloat(redondeado.toFixed(2)));
+  if (s === "-0") { s = "0"; }
+  return s;
+}
+function buscarUltimoOperadorBinario(t) {
+  var prof = 0;
+  for (var j = t.length - 1; j >= 0; j--) {
+    var c = t[j];
+    if (c === ")") { prof++; }
+    else if (c === "(") { prof--; }
+    else if (prof === 0) {
+      if (c === "+" || c === "*" || c === "/") { return j; }
+      if (c === "-") {
+        if (j === 0) { continue; }
+        var prev = t[j - 1];
+        if (esOperador(prev) || prev === "(") { continue; }
+        return j;
+      }
+    }
+  }
+  return -1;
+}
+function porcentaje() {
+  var res = document.getElementById("resultado");
+  if (res.classList.contains("es-error")) { return; }
+  // CA3: pantalla en 0 o vacia -> ignorar
+  if (texto === "" || texto === "0") { return; }
+  var ult = ultimoChar();
+  // CA3: justo despues de operador sin nuevo numero -> ignorar
+  if (esOperador(ult) || ult === "(" || ult === ".") { return; }
+  if (!parentesisBalanceados(texto)) { return; }
+  // Si se acaba de calcular, tratar resultado como entrada aislada (CA1)
+  if (recienCalculado && ultimoResultado !== "") {
+    var v0 = parseFloat(ultimoResultado);
+    if (isNaN(v0)) { return; }
+    var f0 = formatearNumero(v0 / 100);
+    texto = f0;
+    ultimoResultado = f0;
+    recienCalculado = false;
+    actualizarPantalla();
+    return;
+  }
+  recienCalculado = false;
+  var pos = buscarUltimoOperadorBinario(texto);
+  // CA1: entrada aislada sin operador -> dividir entre 100 inmediato
+  if (pos === -1) {
+    try {
+      for (var k = 0; k < texto.length; k++) {
+        if ("0123456789+-*/.() ".indexOf(texto[k]) === -1) { return; }
+      }
+      var v = Function('"use strict"; return (' + texto + ')')();
+      if (typeof v !== "number" || isNaN(v) || !isFinite(v)) { return; }
+      texto = formatearNumero(v / 100);
+      actualizarPantalla();
+    } catch (e) { return; }
+    return;
+  }
+  var op = texto[pos];
+  var Astr = texto.substring(0, pos);
+  var Bstr = texto.substring(pos + 1);
+  if (Astr === "" || Bstr === "" || Bstr === "(") { return; }
+  // B debe ser numero simple o (-N)
+  var Bval;
+  if (Bstr.charAt(0) === "(") {
+    // Solo aceptar patron (-N)
+    if (!(Bstr.startsWith("(-") && Bstr.endsWith(")"))) { return; }
+    var innerB = Bstr.substring(2, Bstr.length - 1);
+    if (!/^[0-9.]+$/.test(innerB) || innerB === "") { return; }
+    try { Bval = Function('"use strict"; return (' + Bstr + ')')(); }
+    catch (e) { return; }
+  } else {
+    if (!/^-?[0-9.]+$/.test(Bstr)) { return; }
+    // Evitar B con multiples puntos
+    if ((Bstr.match(/\./g) || []).length > 1) { return; }
+    Bval = parseFloat(Bstr);
+  }
+  if (typeof Bval !== "number" || isNaN(Bval) || !isFinite(Bval)) { return; }
+  // Evaluar A
+  var Aval;
+  try {
+    for (var a = 0; a < Astr.length; a++) {
+      if ("0123456789+-*/.() ".indexOf(Astr[a]) === -1) { return; }
+    }
+    Aval = Function('"use strict"; return (' + Astr + ')')();
+    if (typeof Aval !== "number" || isNaN(Aval) || !isFinite(Aval)) { return; }
+  } catch (e) { return; }
+  if (op === "+" || op === "-") {
+    // CA2: B% de A, sustituir B por parcial
+    var parcial = Aval * Bval / 100;
+    var fpar = formatearNumero(parcial);
+    var Bnew = (fpar.charAt(0) === "-") ? "(-" + fpar.substring(1) + ")" : fpar;
+    texto = Astr + op + Bnew;
+    actualizarPantalla();
+  } else {
+    // CA3: * / -> B a decimal B/100
+    var dec = Bval / 100;
+    var fdec = formatearNumero(dec);
+    var Bnew2 = (fdec.charAt(0) === "-") ? "(-" + fdec.substring(1) + ")" : fdec;
+    texto = Astr + op + Bnew2;
+    actualizarPantalla();
+  }
+}
+
+// ===== CALCULAR (RF-1, RF-5, RF-9, RF-10, RF-11, RF-12) / (doc v1: RF-1, RF-5, RF-10, RF-11, RF-12, RF-13) =====
 function calcular() {
   var res = document.getElementById("resultado");
   var exp = document.getElementById("expresion");
 
-  // RF-11: prevenir entradas invalidas
+  // RF-10 nuevo (RF-11 v1): prevenir entradas invalidas
   if (texto === "" || texto === "0") { return; }           // CA1: sin operacion no calcula
+  // RF-1 CA1 + RF-10 CA1 nuevo (RF-11 v1): exigir al menos un operador binario (evita "5 = 5")
+  var tieneOp = false;
+  for (var j = 0; j < texto.length; j++) {
+    var ch = texto[j];
+    if (ch === "+" || ch === "*" || ch === "/") { tieneOp = true; break; }
+    if (ch === "-" && j > 0 && !esOperador(texto[j - 1]) && texto[j - 1] !== "(") { tieneOp = true; break; }
+  }
+  if (!tieneOp) { return; }
   var ult = ultimoChar();
   if (esOperador(ult) || ult === "(" || ult === ".") { return; } // CA2: operacion incompleta
   if (!parentesisBalanceados(texto)) { mostrarError("Error: paréntesis"); return; }
@@ -384,7 +513,7 @@ function calcular() {
     var final = String(parseFloat(redondeado.toFixed(2))); // quita ceros: 5.00->5, 5.50->5.5
     if (final === "-0") { final = "0"; }
 
-    // RF-10: mostrar resultado diferenciado
+    // RF-9 nuevo (RF-10 v1): mostrar resultado diferenciado
     exp.textContent = texto.replaceAll("*", "×").replaceAll("/", "÷").replaceAll("-", "−") + " =";
     res.textContent = final;
     res.className = "es-resultado";
@@ -393,7 +522,7 @@ function calcular() {
     historial.push(texto + " = " + final);
     mostrarEnHistorial();
 
-    // RF-12: guardar resultado para continuar operando
+    // RF-11 nuevo (RF-12 v1): guardar resultado para continuar operando
     ultimoResultado = final;
     texto = final;
     recienCalculado = true;
@@ -411,7 +540,7 @@ function mostrarError(mensaje) {
   recienCalculado = false;
 }
 
-// ===== HISTORIAL (RF-2, RF-9) =====
+// ===== HISTORIAL (RF-2, RF-8 nuevo / RF-9 v1) =====
 function mostrarEnHistorial() {
   var lista = document.getElementById("listaHistorial");
   lista.innerHTML = "";
@@ -426,7 +555,7 @@ function mostrarEnHistorial() {
 }
 
 function limpiarHistorial() {
-  // RF-9 CA1: borra todo
+  // RF-8 nuevo (RF-9 v1) CA1: borra todo
   historial = [];
   var lista = document.getElementById("listaHistorial");
   // CA2: muestra que no hay operaciones
@@ -468,7 +597,7 @@ function parentesisBalanceados(t) {
   return cont === 0;
 }
 
-// Inicio: pantalla en 0 (RF-7, RF-10 CA3)
+// Inicio: pantalla en 0 (RF-7, RF-9 CA3 nuevo / RF-10 v1)
 actualizarPantalla();
 </script>
 </body>
