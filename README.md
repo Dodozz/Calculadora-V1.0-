@@ -1,4 +1,4 @@
-# 🧮 Calculadora V1.0
+# 🧮 Calculadora V3.0
 
 Aplicación web de calculadora con historial de operaciones, desarrollada en **HTML, CSS y JavaScript puro** (sin frameworks ni librerías externas). El proyecto documenta un ciclo completo de **análisis, diseño, desarrollo y pruebas de software**, y se utiliza como caso de estudio (Sistema Bajo Prueba) para la materia de **Modelos de Prueba de Software** — UPIICSA, Instituto Politécnico Nacional.
 
@@ -127,7 +127,7 @@ Como parte de la materia de **Modelos de Prueba de Software**, este proyecto se 
 | CP-02 | RF-5 | Manejo de errores | `8 / 0` | Mensaje "Error: división por cero"; la app sigue operable |
 | CP-03 | RF-6 | Adivinación de errores | `5 + + 3` | Se conserva un solo `+` |
 | CP-04 | RF-3 | Valores límite | Segundo punto decimal en un mismo operando | El segundo punto se ignora |
-| CP-05 | RF-13 | Caja negra / jerarquía de operaciones | `2 + 3 * 4` | `14` |
+| CP-05 | RF-12 | Caja negra / jerarquía de operaciones | `2 + 3 * 4` | `14` |
 | CP-06 | RF-11 | Entrada inválida | Presionar `=` con la expresión `5 +` | No ejecuta el cálculo |
 
 > Estos casos son un punto de partida; el diseño formal de pruebas (matriz de trazabilidad, técnicas adicionales, evidencias de ejecución) se documenta como entregable independiente de la materia.
