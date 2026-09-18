@@ -39,21 +39,27 @@ Este repositorio no solo entrega la calculadora funcional, sino que sirve como *
 | RF-5 | Manejo de errores (p. ej. división entre cero) sin cerrar la aplicación |
 | RF-6 | Control de operadores consecutivos (el nuevo reemplaza al anterior) |
 | RF-7 | Ingreso y visualización de números dígito por dígito |
-| RF-8 | Cambio de signo (+/−) del número actual |
-| RF-9 | Limpieza total del historial |
-| RF-10 | Visualización diferenciada del resultado respecto a la expresión en curso |
-| RF-11 | Prevención de entradas que no formen una operación válida |
-| RF-12 | Continuidad de operaciones reutilizando el resultado previo |
-| RF-13 | Jerarquía de operaciones y soporte de paréntesis |
+| RF-8 | Limpieza total del historial |
+| RF-9 | Visualización diferenciada del resultado respecto a la expresión en curso |
+| RF-10 | Prevención de entradas que no formen una operación válida |
+| RF-11 | Continuidad de operaciones reutilizando el resultado previo |
+| RF-12 | Jerarquía de operaciones y soporte de paréntesis |
+| RF-13 | Cálculo de porcentaje (%), con comportamiento dinámico según el operador previo |
+| RF-14 | Cambio de signo (+/−) del número actual |
+| RF-15 | Recuperación del valor en memoria (MR) |
+| RF-16 | Limpieza de la memoria (MC) |
+| RF-17 | Adición del valor en pantalla a la memoria (M+) |
+| RF-18 | Sustracción del valor en pantalla a la memoria (M-) |
+| RF-19 | Indicador visual ("M") de memoria activa |
 
-> 📄 El detalle completo de cada RF con sus criterios de aceptación (CA) se encuentra en el documento **Análisis y Diseño** incluido en el repositorio.
+> 📄 El detalle completo de cada RF con sus criterios de aceptación (CA) se encuentra en los documentos de requerimientos (**REQUERIMIENTOS.docx**, **REQUERIMIENTOS_3.docx**) y **Análisis y Diseño** incluidos en el repositorio.
 
 ## 🚦 Requerimientos no funcionales
 
 | ID | Requerimiento |
 |---|---|
 | RNF-1 | Usabilidad: interfaz sencilla e intuitiva |
-| RNF-2 | Diseño visual ordenado, con botones redondeados |
+| RNF-2 | Diseño visual oscuro, ordenado y consistente, con botones cuadrados de alto contraste |
 | RNF-3 | Tiempo de respuesta inmediato, sin retrasos perceptibles |
 | RNF-4 | Legibilidad: textos y resultados con tamaño de letra adecuado |
 | RNF-5 | Estabilidad ante errores o entradas inválidas |
@@ -61,12 +67,12 @@ Este repositorio no solo entrega la calculadora funcional, sino que sirve como *
 
 ## 🎨 Diseño de interfaz
 
-El diseño sigue un mockup tipo *smartphone*:
+El diseño sigue un mockup tipo *smartphone* en **tema oscuro** (RNF-2):
 
-- Encabezado con el título "calculadora" y acceso al historial (ícono de reloj 🕒).
+- Encabezado con el título "calculadora", el indicador de memoria activa ("M", RF-19) y acceso al historial (ícono de reloj 🕒).
 - Panel de historial plegable, con opción de "Limpiar".
-- Pantalla con la expresión en curso (arriba, en gris) y el resultado grande (abajo, en negro).
-- Teclado en cuadrícula 4×4: teclas numéricas en blanco, operadores en azul claro, y la tecla "=" en negro ocupando el ancho completo.
+- Pantalla oscura con la expresión en curso (arriba, en gris) y el resultado grande (abajo, en blanco).
+- Teclado en cuadrícula 4×4 de botones cuadrados: fila de memoria (MC, MR, M+, M-), AC y paréntesis en tonos distintivos, operadores en azul, y la tecla "=" ocupando el ancho completo.
 
 ## 🛠️ Tecnologías utilizadas
 
@@ -79,8 +85,9 @@ El diseño sigue un mockup tipo *smartphone*:
 
 ```
 ├── index.html                     # Aplicación completa (HTML + CSS + JS)
-├── docs/
-│   └── Analisis_y_Diseno.docx     # Requerimientos (RF/RNF) y mockups de diseño
+├── REQUERIMIENTOS.docx            # Requerimientos funcionales y no funcionales (versión inicial)
+├── REQUERIMIENTOS_3.docx          # Requerimientos actualizados (RF-13 a RF-19, RNF-2 tema oscuro)
+├── Análisis y Diseño (1).docx     # Documento de análisis y diseño con mockups de interfaz
 └── README.md                      # Este archivo
 ```
 
@@ -107,6 +114,8 @@ No requiere instalación de dependencias.
 | `10 / 0` | `Error: división por cero` |
 | `7` seguido de `+/-` | `-7` |
 | `2.5 + 2.5` | `5` (sin ceros decimales innecesarios) |
+| `200 + 20%` seguido de `=` | `240` (20% de 200 se suma a 200) |
+| `7` seguido de `M+`, luego `AC`, luego `MR` | `7` (recupera el valor guardado en memoria) |
 
 ## 🧪 Enfoque de pruebas
 
@@ -125,7 +134,7 @@ Como parte de la materia de **Modelos de Prueba de Software**, este proyecto se 
 
 ## 📌 Estado del proyecto
 
-🟡 **Versión 1.0** — funcionalidad completa según RF-1 a RF-13, actualmente en fase de pruebas.
+🟡 **Versión 3.0 (preliminar)** — funcionalidad completa según RF-1 a RF-19 (incluye porcentaje, cambio de signo y funciones de memoria MC/MR/M+/M-) y diseño en tema oscuro (RNF-2), actualmente en fase de pruebas.
 
 ## 📄 Licencia
 
