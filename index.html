@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculadora V1.0</title>
 <style>
-  /* RNF-2: diseño ordenado, botones redondeados. RNF-4: textos grandes y legibles. */
+  /* RNF-2: diseño oscuro, botones cuadrados, alto contraste. RNF-4: textos grandes y legibles. */
   * { box-sizing: border-box; font-family: -apple-system, Arial, sans-serif; }
   body {
     margin: 0;
-    background: #e8e4dc;
+    background: #3a3a3c;
     display: flex;
     justify-content: center;
     min-height: 100vh;
@@ -17,32 +17,40 @@
   .telefono {
     width: 380px;
     max-width: 100%;
-    background: #f6f3ec;
+    background: #1c1c1e;
     min-height: 100vh;
     padding: 18px 14px;
-    border-left: 3px solid #222;
-    border-right: 3px solid #222;
   }
   .barra-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 22px;
-    color: #333;
+    color: #f2f2f2;
     margin-bottom: 10px;
   }
   .btn-historial {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 22px;
     cursor: pointer;
-    color: #333;
+    color: #f2f2f2;
   }
+  /* Indicador de memoria activa (RF-19) */
+  .badge-m {
+    background: #4a90a4;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 5px;
+    padding: 2px 7px;
+    margin-right: 8px;
+  }
+  .badge-m.oculto { display: none; }
   /* Panel de historial (RF-2, RF-9) */
   .historial {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 12px;
+    background: #2c2c2e;
+    border-radius: 10px;
     padding: 10px 12px;
     margin-bottom: 10px;
   }
@@ -51,20 +59,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 17px;
+    font-size: 16px;
+    color: #d0d0d0;
   }
   .historial-top button {
     background: none; border: none;
-    color: #4a6fa5; font-size: 17px; cursor: pointer;
+    color: #9fb8c9; font-size: 15px; cursor: pointer;
   }
-  .historial-lista { margin-top: 6px; font-size: 16px; max-height: 120px; overflow-y: auto; }
-  .historial-lista div { padding: 2px 0; border-bottom: 1px solid #f0f0f0; }
-  .sin-op { color: #111; }
+  .historial-lista { margin-top: 6px; font-size: 15px; max-height: 120px; overflow-y: auto; color: #e6e6e6; }
+  .historial-lista div { padding: 2px 0; border-bottom: 1px solid #3a3a3c; }
+  .sin-op { color: #8a8a8a; }
   /* Pantalla (RF-7, RF-10) */
   .pantalla {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 14px;
+    background: #141414;
+    border-radius: 10px;
     padding: 14px 16px;
     text-align: right;
     min-height: 110px;
@@ -72,54 +80,65 @@
   }
   #expresion {
     font-size: 22px;
-    color: #999;
+    color: #8a8a8a;
     min-height: 28px;
     word-wrap: break-word;
   }
   #resultado {
     font-size: 52px;
-    color: #111;
+    color: #f2f2f2;
     font-weight: 500;
     word-wrap: break-word;
   }
-  /* Resultado se diferencia visualmente (RF-10 CA2) */
-  #resultado.es-resultado { color: #000; font-weight: 700; }
-  #resultado.es-error { color: #c0392b; font-size: 22px; }
+  /* Resultado se diferencia visualmente (RF-9 CA2) */
+  #resultado.es-resultado { color: #fff; font-weight: 700; }
+  #resultado.es-error { color: #e06c5a; font-size: 22px; }
   /* Teclado */
   .teclado {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
   button.tecla {
-    background: #fffdf8;
-    border: 1px solid #d8d2c6;
-    border-radius: 12px;
+    background: #4a4a4c;
+    border: none;
+    border-radius: 8px;
+    font-size: 24px;
+    padding: 14px 0;
+    cursor: pointer;
+    color: #f2f2f2;
+  }
+  button.tecla:active { background: #5c5c5e; }
+  /* Funciones de memoria RF-15 a RF-18 */
+  button.tecla.mem {
+    background: #58585a;
+    font-size: 17px;
+  }
+  button.tecla.mem:active { background: #6a6a6c; }
+  /* AC en tono distinto para destacar limpieza (RF-4) */
+  button.tecla.ac { background: #7a5c4e; }
+  button.tecla.ac:active { background: #8c6c5c; }
+  /* Parentesis y porcentaje */
+  button.tecla.aux { background: #57707c; }
+  button.tecla.aux:active { background: #698590; }
+  /* Operadores en azul como la imagen */
+  button.op {
+    background: #3f6f8f;
+    color: #fff;
+  }
+  button.op:active { background: #4f82a4; }
+  .btn-igual {
+    grid-column: span 3;
+    background: #4a4a4c;
+    color: #f2f2f2;
+    border: none;
+    border-radius: 8px;
     font-size: 26px;
     padding: 14px 0;
     cursor: pointer;
-    color: #222;
+    margin-top: 0;
   }
-  button.tecla:active { background: #eee; }
-  /* Operadores en azul como la imagen */
-  button.op {
-    background: #c9d6f2;
-    color: #2c4f8a;
-    border-color: #b3c3e8;
-  }
-  button.op:active { background: #b3c5ec; }
-  .btn-igual {
-    grid-column: span 3;
-    background: #1c1c1e;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    font-size: 28px;
-    padding: 14px 0;
-    cursor: pointer;
-    margin-top: 2px;
-  }
-  .btn-igual:active { background: #333; }
+  .btn-igual:active { background: #5c5c5e; }
 </style>
 </head>
 <body>
@@ -128,8 +147,12 @@
   <!-- Encabezado -->
   <div class="barra-top">
     <span>calculadora</span>
-    <!-- Boton para mostrar / ocultar historial -->
-    <button class="btn-historial" onclick="mostrarHistorial()" title="Ver historial">🕒</button>
+    <span style="display:flex; align-items:center;">
+      <!-- Indicador de memoria activa (RF-19) -->
+      <span class="badge-m oculto" id="indicadorM">M</span>
+      <!-- Boton para mostrar / ocultar historial -->
+      <button class="btn-historial" onclick="mostrarHistorial()" title="Ver historial">🕒</button>
+    </span>
   </div>
 
   <!-- Historial: RF-2 (guardar y consultar) y RF-8 nuevo / RF-9 v1 (limpiar) -->
@@ -151,9 +174,15 @@
 
   <!-- Botones -->
   <div class="teclado">
-    <button class="tecla" onclick="borrarTodo()">AC</button>
-    <button class="tecla" onclick="agregar('(')">(</button>
-    <button class="tecla" onclick="agregar(')')">)</button>
+    <!-- Memoria: RF-15 MR, RF-16 MC, RF-17 M+, RF-18 M- -->
+    <button class="tecla mem" onclick="memoriaClear()">MC</button>
+    <button class="tecla mem" onclick="memoriaRecall()">MR</button>
+    <button class="tecla mem" onclick="memoriaSumar()">M+</button>
+    <button class="tecla mem" onclick="memoriaRestar()">M-</button>
+
+    <button class="tecla ac" onclick="borrarTodo()">AC</button>
+    <button class="tecla aux" onclick="agregar('(')">(</button>
+    <button class="tecla aux" onclick="agregar(')')">)</button>
     <button class="tecla" onclick="retroceso()">⌫</button>
 
     <button class="tecla" onclick="agregar('7')">7</button>
@@ -176,7 +205,7 @@
     <button class="tecla" onclick="agregar('.')">.</button>
     <button class="tecla op" onclick="agregar('+')">+</button>
 
-    <button class="tecla op" onclick="porcentaje()">%</button>
+    <button class="tecla aux" onclick="porcentaje()">%</button>
     <button class="btn-igual" onclick="calcular()">=</button>
   </div>
 </div>
@@ -187,6 +216,7 @@ var texto = "";            // lo que el usuario escribe, ej: "5+3"
 var ultimoResultado = "";  // guarda el resultado para continuar operando (RF-11 nuevo / RF-12 v1)
 var recienCalculado = false; // true cuando se acaba de presionar =
 var historial = [];        // lista de operaciones (RF-2)
+var memoria = 0;           // valor guardado en memoria (RF-15 a RF-19)
 
 // ===== MOSTRAR EN PANTALLA (RF-7, RF-9 nuevo / RF-10 v1) =====
 function actualizarPantalla() {
@@ -570,6 +600,60 @@ function mostrarHistorial() {
   else { p.classList.add("oculto"); }
 }
 
+// ===== MEMORIA: MC, MR, M+, M- (RF-15 a RF-19) =====
+// Obtiene el numero que se ve actualmente en pantalla, o null si la expresion esta incompleta
+function valorActualPantalla() {
+  if (recienCalculado && ultimoResultado !== "") { return parseFloat(ultimoResultado); }
+  if (texto === "") { return 0; }
+  var ult = ultimoChar();
+  if (esOperador(ult) || ult === "(" || ult === "." || !parentesisBalanceados(texto)) { return null; }
+  for (var i = 0; i < texto.length; i++) {
+    if ("0123456789+-*/.() ".indexOf(texto[i]) === -1) { return null; }
+  }
+  try {
+    var v = Function('"use strict"; return (' + texto + ')')();
+    if (typeof v !== "number" || isNaN(v) || !isFinite(v)) { return null; }
+    return v;
+  } catch (e) { return null; }
+}
+
+// RF-19: muestra u oculta el indicador "M" segun si hay valor en memoria
+function actualizarIndicadorMemoria() {
+  var badge = document.getElementById("indicadorM");
+  if (memoria !== 0) { badge.classList.remove("oculto"); }
+  else { badge.classList.add("oculto"); }
+}
+
+// RF-16: MC deja la memoria en 0 sin tocar la pantalla actual
+function memoriaClear() {
+  memoria = 0;
+  actualizarIndicadorMemoria();
+}
+
+// RF-15: MR reemplaza el numero actual en pantalla por el valor de la memoria
+function memoriaRecall() {
+  texto = formatearNumero(memoria);
+  ultimoResultado = "";
+  recienCalculado = false;
+  actualizarPantalla();
+}
+
+// RF-17: M+ suma el valor visible en pantalla a la memoria
+function memoriaSumar() {
+  var v = valorActualPantalla();
+  if (v === null) { return; }
+  memoria = parseFloat(formatearNumero(memoria + v));
+  actualizarIndicadorMemoria();
+}
+
+// RF-18: M- resta el valor visible en pantalla a la memoria (memoria - pantalla)
+function memoriaRestar() {
+  var v = valorActualPantalla();
+  if (v === null) { return; }
+  memoria = parseFloat(formatearNumero(memoria - v));
+  actualizarIndicadorMemoria();
+}
+
 // ===== AYUDAS PEQUEÑAS =====
 function ultimoChar() {
   if (texto === "") { return ""; }
@@ -599,6 +683,7 @@ function parentesisBalanceados(t) {
 
 // Inicio: pantalla en 0 (RF-7, RF-9 CA3 nuevo / RF-10 v1)
 actualizarPantalla();
+actualizarIndicadorMemoria();
 </script>
 </body>
 </html>
