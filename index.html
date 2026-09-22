@@ -648,20 +648,29 @@ function mostrarHistorial() {
 }
 
 // ===== MEMORIA: MC, MR, M+, M- (RF-15 a RF-19) =====
-// Obtiene el numero que se ve actualmente en pantalla, o null si la expresion esta incompleta
+// Numero visible con el que operan M+ y M-, o null si no hay uno claro.
+// Es el operando que se esta escribiendo, no el total de la expresion:
+// en "5+3" el numero visible es 3 (RF-17 CA1, RF-18 CA1).
 function valorActualPantalla() {
+  var res = document.getElementById("resultado");
+  if (res.classList.contains("es-error")) { return null; }
+  // Despues de = el numero visible es el resultado (RF-11)
   if (recienCalculado && ultimoResultado !== "") { return parseFloat(ultimoResultado); }
   if (texto === "") { return 0; }
-  var ult = ultimoChar();
-  if (esOperador(ult) || ult === "(" || ult === "." || !parentesisBalanceados(texto)) { return null; }
-  for (var i = 0; i < texto.length; i++) {
-    if ("0123456789+-*/.() ".indexOf(texto[i]) === -1) { return null; }
+  // Negativo hecho con +/-, que se guarda como (-N)
+  var neg = texto.match(/\(-([0-9]*\.?[0-9]+)\)$/);
+  if (neg) { return -parseFloat(neg[1]); }
+  var actual = ultimoNumero(texto);
+  if (actual === "" || actual === ".") { return null; } // ej: "5+" no tiene operando aun
+  var v = parseFloat(actual);
+  if (isNaN(v) || !isFinite(v)) { return null; }
+  // Signo negativo al inicio o tras un operador: -3, 5*-3
+  var antes = texto.substring(0, texto.length - actual.length);
+  if (antes.charAt(antes.length - 1) === "-") {
+    var prev = antes.charAt(antes.length - 2);
+    if (antes.length === 1 || esOperador(prev) || prev === "(") { v = -v; }
   }
-  try {
-    var v = Function('"use strict"; return (' + texto + ')')();
-    if (typeof v !== "number" || isNaN(v) || !isFinite(v)) { return null; }
-    return v;
-  } catch (e) { return null; }
+  return v;
 }
 
 // RF-19: muestra u oculta el indicador "M" segun si hay valor en memoria
@@ -677,11 +686,24 @@ function memoriaClear() {
   actualizarIndicadorMemoria();
 }
 
-// RF-15: MR reemplaza el numero actual en pantalla por el valor de la memoria
+// RF-15: MR sustituye el numero actual por el valor de la memoria y queda
+// listo para seguir operando (CA3): con "7+" en pantalla, MR da "7+5"
 function memoriaRecall() {
-  texto = formatearNumero(memoria);
-  ultimoResultado = "";
-  recienCalculado = false;
+  var res = document.getElementById("resultado");
+  // Si habia un error, empezar de cero (RF-5 CA2)
+  if (res.classList.contains("es-error")) { texto = ""; }
+  // RF-11 CA1: despues de un resultado, MR inicia una operacion nueva
+  if (recienCalculado) { texto = ""; ultimoResultado = ""; recienCalculado = false; }
+  // Quitar solo el numero que se este escribiendo, conservando la expresion
+  var actual = ultimoNumero(texto);
+  if (actual !== "") { texto = texto.substring(0, texto.length - actual.length); }
+  if (texto === "0") { texto = ""; }
+  // Multiplicacion implicita si viene tras un parentesis: (2)MR
+  if (ultimoChar() === ")") { texto = texto + "*"; }
+  var valor = formatearNumero(memoria);
+  // Un negativo se inserta entre parentesis para no romper la expresion
+  if (valor.charAt(0) === "-" && texto !== "") { texto = texto + "(" + valor + ")"; }
+  else { texto = texto + valor; }
   actualizarPantalla();
 }
 
