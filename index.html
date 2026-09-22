@@ -281,7 +281,11 @@ function agregar(valor) {
   if (valor >= "0" && valor <= "9") {
     // CA1: si esta en 0, reemplazar el 0 inicial
     if (texto === "" || texto === "0") { texto = valor; }
-    else { texto = texto + valor; }
+    else {
+      // Multiplicacion implicita: (8)8 se entiende como (8)*8 (RF-12)
+      if (ultimoChar() === ")") { texto = texto + "*"; }
+      texto = texto + valor;
+    }
     actualizarPantalla();
     return;
   }
@@ -293,6 +297,9 @@ function agregar(valor) {
     if (operando === "") { // CA3: sin numero muestra 0.
       if (texto === "" || esOperador(ultimoChar()) || ultimoChar() === "(") {
         texto = texto + "0.";
+      } else if (ultimoChar() === ")") {
+        // Multiplicacion implicita: (8). se entiende como (8)*0.
+        texto = texto + "*0.";
       } else {
         texto = texto + ".";
       }
@@ -307,6 +314,13 @@ function agregar(valor) {
   if (valor === "(" || valor === ")") {
     if (recienCalculado && valor === "(") { texto = ""; recienCalculado = false; }
     if (texto === "0") { texto = ""; }
+    // Multiplicacion implicita: 8( y )( se entienden con * (RF-12)
+    if (valor === "(") {
+      var antesPar = ultimoChar();
+      if ((antesPar >= "0" && antesPar <= "9") || antesPar === ")" || antesPar === ".") {
+        texto = texto + "*";
+      }
+    }
     texto = texto + valor;
     actualizarPantalla();
     return;
