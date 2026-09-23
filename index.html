@@ -242,6 +242,7 @@ var ultimoResultado = "";  // guarda el resultado para continuar operando (RF-11
 var recienCalculado = false; // true cuando se acaba de presionar =
 var historial = [];        // lista de operaciones (RF-2)
 var memoria = 0;           // valor guardado en memoria (RF-15 a RF-19)
+var recienRecuperado = false; // true cuando el operando actual viene de MR
 
 // ===== MOSTRAR EN PANTALLA (RF-7, RF-9 nuevo / RF-10 v1) =====
 function actualizarPantalla() {
@@ -275,6 +276,13 @@ function agregar(valor) {
       ultimoResultado = "";
     }
     recienCalculado = false;
+  }
+
+  // RF-15: el valor traido con MR se comporta como una entrada, asi que
+  // el primer numero que se escriba lo reemplaza en vez de pegarse a el
+  if (recienRecuperado) {
+    if ((valor >= "0" && valor <= "9") || valor === ".") { quitarUltimoNumero(); }
+    recienRecuperado = false;
   }
 
   // --- Numeros (RF-7) ---
@@ -375,6 +383,7 @@ function retroceso() {
   if (res.classList.contains("es-error")) { texto = ""; actualizarPantalla(); return; }
   // RF-4 CA1 + RF-11 (RF-12 v1): despues del resultado se permite editar el resultado
   if (recienCalculado) { recienCalculado = false; ultimoResultado = ""; }
+  recienRecuperado = false;
   if (texto.length > 0) {
     texto = texto.substring(0, texto.length - 1);
   }
@@ -386,6 +395,7 @@ function borrarTodo() {
   texto = "";
   ultimoResultado = "";
   recienCalculado = false;
+  recienRecuperado = false;
   actualizarPantalla();
 }
 
@@ -595,6 +605,7 @@ function calcular() {
     ultimoResultado = final;
     texto = final;
     recienCalculado = true;
+    recienRecuperado = false;
 
   } catch (e) {
     // RF-5: mostrar error sin bloquear (CA2, CA3)
@@ -695,8 +706,7 @@ function memoriaRecall() {
   // RF-11 CA1: despues de un resultado, MR inicia una operacion nueva
   if (recienCalculado) { texto = ""; ultimoResultado = ""; recienCalculado = false; }
   // Quitar solo el numero que se este escribiendo, conservando la expresion
-  var actual = ultimoNumero(texto);
-  if (actual !== "") { texto = texto.substring(0, texto.length - actual.length); }
+  quitarUltimoNumero();
   if (texto === "0") { texto = ""; }
   // Multiplicacion implicita si viene tras un parentesis: (2)MR
   if (ultimoChar() === ")") { texto = texto + "*"; }
@@ -704,6 +714,8 @@ function memoriaRecall() {
   // Un negativo se inserta entre parentesis para no romper la expresion
   if (valor.charAt(0) === "-" && texto !== "") { texto = texto + "(" + valor + ")"; }
   else { texto = texto + valor; }
+  // El siguiente numero que se escriba reemplaza a este valor
+  recienRecuperado = true;
   actualizarPantalla();
 }
 
@@ -730,6 +742,21 @@ function ultimoChar() {
 }
 function esOperador(c) {
   return c === "+" || c === "-" || c === "*" || c === "/";
+}
+// Quita de la expresion el numero que se esta escribiendo, incluido el
+// envoltorio (-N) con el que se guardan los negativos
+function quitarUltimoNumero() {
+  var neg = texto.match(/\(-[0-9]*\.?[0-9]+\)$/);
+  if (neg) { texto = texto.substring(0, texto.length - neg[0].length); return; }
+  var actual = ultimoNumero(texto);
+  if (actual !== "") { texto = texto.substring(0, texto.length - actual.length); }
+  // Quitar tambien el signo si el numero era un negativo: -3, 5*-3
+  if (texto.charAt(texto.length - 1) === "-") {
+    var prev = texto.charAt(texto.length - 2);
+    if (texto.length === 1 || esOperador(prev) || prev === "(") {
+      texto = texto.substring(0, texto.length - 1);
+    }
+  }
 }
 // Devuelve el numero que se esta escribiendo (para RF-3)
 function ultimoNumero(t) {
